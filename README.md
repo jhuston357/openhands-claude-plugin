@@ -60,6 +60,65 @@ for chunk in provider.stream_generate(
     print(chunk, end="", flush=True)
 ```
 
+### Integration with OpenHands
+
+To use this plugin with OpenHands, you'll need to register it as a provider in your OpenHands configuration:
+
+```python
+from openhands import OpenHands
+from openhands_claude_plugin import ClaudeDirectProvider
+
+# Initialize the Claude provider
+claude_provider = ClaudeDirectProvider(
+    session_key="your_session_key_here",
+    model="claude-3-opus-20240229"
+)
+
+# Register the provider with OpenHands
+openhands = OpenHands()
+openhands.register_provider("claude-direct", claude_provider)
+
+# Now you can use it in your OpenHands instance
+response = openhands.generate(
+    "Tell me about quantum computing",
+    provider="claude-direct",
+    system_prompt="You are a helpful AI assistant.",
+    temperature=0.7
+)
+print(response)
+```
+
+#### Using in OpenHands Config File
+
+You can also configure the provider in your OpenHands YAML configuration file:
+
+```yaml
+providers:
+  claude-direct:
+    type: custom
+    module: openhands_claude_plugin
+    class: ClaudeDirectProvider
+    config:
+      session_key: ${CLAUDE_SESSION_KEY}
+      model: claude-3-opus-20240229
+      timeout: 120
+
+default_provider: claude-direct
+```
+
+Then in your code:
+
+```python
+from openhands import OpenHands
+
+# OpenHands will load the Claude provider from your config
+openhands = OpenHands.from_config("config.yaml")
+
+# Use it directly
+response = openhands.generate("Tell me about quantum computing")
+print(response)
+```
+
 ## Getting Your Session Key
 
 To use this plugin, you need to obtain your Claude session key:
@@ -69,6 +128,37 @@ To use this plugin, you need to obtain your Claude session key:
 3. Go to the Application/Storage tab
 4. Look for Cookies > claude.ai
 5. Find the cookie named `sessionKey` and copy its value
+
+### Security Considerations
+
+The session key provides full access to your Claude account. To use it securely:
+
+1. Store it as an environment variable rather than hardcoding it:
+   ```bash
+   # Set the environment variable
+   export CLAUDE_SESSION_KEY="your_session_key_here"
+   ```
+
+2. In your code, load it from the environment:
+   ```python
+   import os
+   from openhands_claude_plugin import ClaudeDirectProvider
+   
+   # Load from environment variable
+   session_key = os.environ.get("CLAUDE_SESSION_KEY")
+   provider = ClaudeDirectProvider(session_key=session_key)
+   ```
+
+3. For OpenHands config files, use environment variable substitution:
+   ```yaml
+   providers:
+     claude-direct:
+       type: custom
+       module: openhands_claude_plugin
+       class: ClaudeDirectProvider
+       config:
+         session_key: ${CLAUDE_SESSION_KEY}
+   ```
 
 ## Configuration
 
